@@ -1,2 +1,3 @@
 # mpnn
-Message Passing Neural Network for Chemistry
+
+message-passing neural net

@@ -3,12 +3,12 @@
 
 # # MPNN
 # 
-# ### Input preparation
+# # Input preparation
 # - Search bonds : [see this](search_bonds.ipynb)
 # - Search angles : [see this](search_angles.ipynb)
 # - Generate input array : [see this](gen_input_graph.ipynb)
 #     
-# ### Prepared files:
+# # Prepared files:
 # - Train
 #     - Nodes features
 #     - Edges features input
@@ -16,9 +16,6 @@
 # - Test
 #     - Nodes features
 #     - Edges features input
-
-# In[53]:
-
 
 import os
 #os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
@@ -32,16 +29,9 @@ import ase.visualize
 
 from sklearn.utils import shuffle
 
-
-# In[54]:
-
-
 tf.test.is_gpu_available(
     cuda_only=False, min_cuda_compute_capability=None
 )
-
-
-# In[38]:
 
 dir_inp = "test/j-coupling-dataset/"
 nodes_train = np.load(dir_inp + "nodes_train.npz")['arr_0'][:5000]
@@ -51,40 +41,22 @@ out_edges_train = np.load(dir_inp + "out_edges_train.npz")['arr_0'][:5000]
 nodes_test = np.load(dir_inp+ "nodes_test.npz")['arr_0'][:1000]
 in_edges_test = np.load(dir_inp + "in_edges_test.npz")['arr_0'][:1000]
 
-
-# In[39]:
-
-
 print(nodes_train.shape)
 print(in_edges_train.shape)
 print(out_edges_train.shape)
 print(nodes_test.shape)
 print(in_edges_test.shape)
 
-
-# In[40]:
-
-
 out_labels = out_edges_train.reshape(-1, out_edges_train.shape[1]*out_edges_train.shape[2],1)
 in_edges_train = in_edges_train.reshape(-1, in_edges_train.shape[1]*in_edges_train.shape[2], in_edges_train.shape[3])
 in_edges_test  = in_edges_test.reshape(-1, in_edges_test.shape[1]*in_edges_test.shape[2], in_edges_test.shape[3])
 
-
-# In[41]:
-
-
 nodes_train, in_edges_train, out_labels = shuffle(nodes_train, in_edges_train, out_labels)
 
-
 # ## Message Passing Neural Network
-# 
 # Implement according to Gilmer et al. https://arxiv.org/abs/1704.01212
 
-# ### Build message parser
-
-# In[42]:
-
-
+# Build message parser
 class Message_Passer_NNM(tf.keras.layers.Layer):
     def __init__(self, node_dim):
         super(Message_Passer_NNM, self).__init__()
@@ -106,11 +78,7 @@ class Message_Passer_NNM(tf.keras.layers.Layer):
         return messages
 
 
-# ### Build aggregator
-
-# In[43]:
-
-
+# Build aggregator
 class Message_Agg(tf.keras.layers.Layer):
     def __init__(self):
         super(Message_Agg, self).__init__()
@@ -119,11 +87,7 @@ class Message_Agg(tf.keras.layers.Layer):
         return tf.math.reduce_sum(messages, 2)
 
 
-# ### Build update function - GRU
-
-# In[44]:
-
-
+# Build update function - GRU
 class Update_Func_GRU(tf.keras.layers.Layer):
     def __init__(self, state_dim):
         super(Update_Func_GRU, self).__init__()
@@ -147,11 +111,7 @@ class Update_Func_GRU(tf.keras.layers.Layer):
         return activation
 
 
-# ### Output layer
-
-# In[45]:
-
-
+# Output layer
 class Edge_Regressor(tf.keras.layers.Layer):
     def __init__(self, intermediate_dim):
         super(Edge_Regressor, self).__init__()
@@ -177,11 +137,7 @@ class Edge_Regressor(tf.keras.layers.Layer):
         return self.output_layer(activation_2)
 
 
-# ### Build Single Message Passing Layer
-
-# In[46]:
-
-
+# Build Single Message Passing Layer
 class MP_Layer(tf.keras.layers.Layer):
     def __init__(self, state_dim):
         super(MP_Layer, self).__init__(self)
@@ -214,11 +170,7 @@ class MP_Layer(tf.keras.layers.Layer):
         return nodes_out
 
 
-# ### Formulate MPNN
-
-# In[47]:
-
-
+# Formulate MPNN
 adj_input = tf.keras.Input(shape=(None,), name='adj_input')
 nod_input = tf.keras.Input(shape=(None,), name='nod_input')
 
@@ -257,14 +209,11 @@ class MPNN(tf.keras.Model):
         return con_edges
 
 
-# ### Define metrics (loss)
+# Define metrics (loss)
 # 
 # Supported now:
 # - MSE
 # - Log MSE
-
-# In[48]:
-
 
 def mse(orig , preds):
     # Mask values for which no scalar coupling exists
@@ -276,10 +225,6 @@ def mse(orig , preds):
     reconstruction_error = tf.reduce_mean(tf.square(tf.subtract(nums, preds)))
 
     return reconstruction_error
-
-
-# In[49]:
-
 
 def log_mse(orig , preds):
     # Mask values for which no scalar coupling exists
@@ -293,11 +238,7 @@ def log_mse(orig , preds):
     return reconstruction_error
 
 
-# ### Define callback and optimizer
-
-# In[50]:
-
-
+# Define callback and optimizer
 learning_rate = 0.001
 def step_decay(epoch):
     initial_lrate = learning_rate
@@ -317,11 +258,7 @@ stop_early = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience = 15,
 opt = tf.optimizers.Adam(learning_rate=learning_rate)
 
 
-# ### Construct a model and compile
-
-# In[51]:
-
-
+# Construct a model and compile
 mpnn = MPNN(out_int_dim = 512, state_dim = 128, T = 4)
 mpnn.compile(opt, mse, metrics = [mse, log_mse])
 
@@ -332,11 +269,7 @@ epochs = 25
 mpnn.call({'adj_input' : in_edges_train[:10], 'nod_input': nodes_train[:10]})
 
 
-# ### Start training
-
-# In[56]:
-
-
+# Start training
 mpnn.fit({'adj_input': in_edges_train[:train_size], 
           'nod_input': nodes_train[:train_size]}, 
          y = out_labels[:train_size], 
@@ -350,11 +283,5 @@ mpnn.fit({'adj_input': in_edges_train[:train_size],
                              'nod_input': nodes_train[train_size:]}, 
                             out_labels[train_size:]))
 
-
-# In[ ]:
-
-
 ## Prediction
-
 preds = mpnn.predict({'adj_input' : in_edges_test, 'nod_input': nodes_test})
-
