@@ -1,6 +1,7 @@
 # Message-Passing Neural Network (MPNN)
 
 Message-Passing Neural Network (MPNN) model for predicting molecular properties
+Implement according to Gilmer *et al.* https://arxiv.org/abs/1704.01212
 
 ### Input preparation
 - Search bonds ([see this](search_bonds.ipynb))

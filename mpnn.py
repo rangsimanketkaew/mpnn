@@ -1,21 +1,7 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # coding: utf-8
 
-# # MPNN
-# 
-# # Input preparation
-# - Search bonds : [see this](search_bonds.ipynb)
-# - Search angles : [see this](search_angles.ipynb)
-# - Generate input array : [see this](gen_input_graph.ipynb)
-#     
-# # Prepared files:
-# - Train
-#     - Nodes features
-#     - Edges features input
-#     - Edges output
-# - Test
-#     - Nodes features
-#     - Edges features input
+# Message-Passing Neural Network
 
 import os
 #os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
